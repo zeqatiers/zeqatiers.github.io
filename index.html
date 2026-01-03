@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Leaderboard</title>
+
+<style>
+:root {
+  --bg: #0f1115;
+  --panel: #161922;
+  --border: #2a2f42;
+  --text: #f2f4f8;
+  --muted: #9aa1b2;
+  --accent: #5f7cff;
+}
+
+body {
+  margin: 0;
+  padding: 32px;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+h1 {
+  margin-bottom: 14px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+/* Mode switcher */
+.modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.modes button {
+  background: #1c2030;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .15s ease, border .15s ease;
+}
+
+.modes button:hover {
+  background: #252a42;
+}
+
+.modes button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+/* Table */
+.table-wrap {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: #1c2030;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: #1a1f33;
+}
+
+td:first-child {
+  font-weight: 700;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Leaderboard</h1>
+
+<div class="modes" id="modes"></div>
+
+<div class="table-wrap">
+  <table id="sheetTable"></table>
+</div>
+
+<script>
+const SHEET_ID = "1btyXwP_vAB0zfZYlrekFD242DbwKmjXLf2crAxgsR90";
+
+const MODES = [
+   { id: "overall", label: "Overall" },
+  { id: "boxing", label: "Boxing" },
+  { id: "bedfight", label: "Bedfight" },
+  { id: "battlerush", label: "Battle Rush" },
+  { id: "Bridge", label: "Bridge" },
+  { id: "builduhc", label: "Build UHC" },
+  { id: "crystal", label: "Crystal" },
+  { id: "finaluhc", label: "Final UHC" },
+  { id: "fireballfight", label: "Fireball Fight" },
+  { id: "fireballmace", label: "Fireball Mace" },
+  { id: "mace", label: "Mace" },
+  { id: "nodebuff", label: "Nodebuff" }
+];
+
+const table = document.getElementById("sheetTable");
+const modesContainer = document.getElementById("modes");
+
+function buildModeButtons() {
+  MODES.forEach((mode, index) => {
+    const btn = document.createElement("button");
+    btn.textContent = mode.label;
+    btn.onclick = () => loadMode(mode.id, btn);
+
+    if (index === 0) btn.classList.add("active");
+    modesContainer.appendChild(btn);
+  });
+}
+
+function loadMode(tabName, button) {
+  document.querySelectorAll(".modes button")
+    .forEach(b => b.classList.remove("active"));
+
+  if (button) button.classList.add("active");
+
+  const url =
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tabName)}`;
+
+  fetch(url)
+    .then(res => res.text())
+    .then(text => {
+      const json = JSON.parse(text.substring(47).slice(0, -2));
+
+      table.innerHTML = "";
+
+      // Headers
+      let headerRow = "<thead><tr>";
+      json.table.cols.forEach(col => {
+        headerRow += `<th>${col.label}</th>`;
+      });
+      headerRow += "</tr></thead><tbody>";
+      table.innerHTML = headerRow;
+
+      // Rows
+      json.table.rows.forEach(row => {
+        let tr = "<tr>";
+        row.c.forEach(cell => {
+          tr += `<td>${cell ? cell.v : ""}</td>`;
+        });
+        tr += "</tr>";
+        table.innerHTML += tr;
+      });
+
+      table.innerHTML += "</tbody>";
+    });
+}
+
+// Init
+buildModeButtons();
+loadMode(MODES[0].id);
+</script>
+
+</body>
+</html>
